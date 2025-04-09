@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add Workflow button to Journal Entry form -->
+    <record id="view_move_form_inherit_workflow" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.workflow</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <button name="action_post" position="before">
+                <button name="action_run_workflow" 
+                        string="Run Workflow" 
+                        type="object" 
+                        class="oe_highlight" 
+                        groups="account.group_account_user"
+                        modifiers ="{'invisible': ['|', ('state', '!=', 'posted'), ('workflow_id', '!=', False)]}"/>
+            </button>
+            <field name="currency_id" position="after">
+                <field name="workflow_id" readonly="1" modifiers ="{'invisible': [('workflow_id', '=', False)]}"/>
+                <field name="workflow_sequence" readonly="1" modifiers ="{'invisible': [('workflow_sequence', '=', 0)]}"/>
+            </field>
+            <notebook position="inside">
+                <page string="Related Workflow Entries" modifiers ="{'invisible': [('related_move_ids', '=', [])]}">
+                    <field name="related_move_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="ref"/>
+                            <field name="journal_id"/>
+                            <field name="partner_id"/>
+                            <field name="amount_total"/>
+                            <field name="workflow_sequence"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

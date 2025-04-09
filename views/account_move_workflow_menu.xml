@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Actions -->
+    <record id="action_account_move_workflow" model="ir.actions.act_window">
+        <field name="name">Accounting Workflows</field>
+        <field name="res_model">account.move.workflow</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_account_move_workflow_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create the first accounting workflow
+            </p>
+            <p>
+                Accounting workflows help you automate repetitive operations by defining reusable sequences of accounting templates.
+            </p>
+        </field>
+    </record>
+    
+    <record id="action_run_workflow" model="ir.actions.act_window">
+        <field name="name">Execute Accounting Workflow</field>
+        <field name="res_model">account.move.workflow.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- Menu Items -->
+    <menuitem id="menu_account_move_workflow"
+        name="Accounting Workflows"
+        parent="account.menu_finance_configuration"
+        action="action_account_move_workflow"
+        sequence="20"/>
+
+    <menuitem id="menu_run_workflow" 
+        name="Execute Workflow"
+        parent="account.menu_finance_entries"
+        action="action_run_workflow"
+        sequence="10"/>
+</odoo>
