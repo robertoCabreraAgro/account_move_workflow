@@ -8,10 +8,10 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class AccountMoveWorkflowTemplate(models.Model):
-    _inherit = 'account.move.workflow.template'
+    _inherit = 'account.move.template'
     
     workflow_line_ids = fields.One2many(
-        'account.workflow.template.line',
+        'account.move.workflow.template.line',
         'template_id',
         string='Used in Workflows'
     )

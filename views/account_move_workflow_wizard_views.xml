@@ -11,41 +11,41 @@
                     <group>
                         <field name="workflow_id" options="{'no_create': True}"
                                domain="[('company_id', '=', company_id), ('active', '=', True)]"
-                               attrs="{'readonly': [('state', '=', 'preview')]}"/>
+                               modifiers="{'readonly': [('state', '=', 'preview')]}"/>
                         <field name="company_id" invisible="1"/>
                         <field name="require_partner" invisible="1"/>
                         <field name="require_amount" invisible="1"/>
                         <field name="source_move_id" invisible="1"/>
                     </group>
                     
-                    <group attrs="{'invisible': [('workflow_id', '=', False)]}">
+                    <group modifiers="{'invisible': [('workflow_id', '=', False)]}">
                         <group>
                             <field name="partner_id" 
-                                   attrs="{'required': [('require_partner', '=', True)], 
+                                   modifiers="{'required': [('require_partner', '=', True)], 
                                            'readonly': [('state', '=', 'preview')]}" 
                                    options="{'no_create': True}"/>
-                            <field name="date" required="1" attrs="{'readonly': [('state', '=', 'preview')]}"/>
+                            <field name="date" required="1" modifiers="{'readonly': [('state', '=', 'preview')]}"/>
                             <field name="journal_id" 
-                                   attrs="{'invisible': [('workflow_id', '=', False)], 
+                                   modifiers="{'invisible': [('workflow_id', '=', False)], 
                                            'readonly': [('state', '=', 'preview')]}" 
                                    options="{'no_create': True}"/>
                         </group>
                         <group>
                             <field name="amount" 
-                                   attrs="{'required': [('require_amount', '=', True)], 
+                                   modifiers="{'required': [('require_amount', '=', True)], 
                                            'readonly': [('state', '=', 'preview')]}"/>
                             <field name="currency_id" 
-                                   attrs="{'invisible': [('workflow_id', '=', False)], 
+                                   modifiers="{'invisible': [('workflow_id', '=', False)], 
                                            'readonly': [('state', '=', 'preview')]}" 
                                    options="{'no_create': True}"/>
-                            <field name="reference" placeholder="Optional reference" attrs="{'readonly': [('state', '=', 'preview')]}"/>
+                            <field name="reference" placeholder="Optional reference" modifiers="{'readonly': [('state', '=', 'preview')]}"/>
                         </group>
                     </group>
                     
-                    <notebook attrs="{'invisible': [('workflow_id', '=', False)]}">
+                    <notebook modifiers="{'invisible': [('workflow_id', '=', False)]}">
                         <page string="Templates to Execute">
                             <field name="template_preview_ids" widget="one2many">
-                                <tree decoration-success="will_execute and state == 'valid'" 
+                                <list decoration-success="will_execute and state == 'valid'" 
                                       decoration-danger="(not will_execute) or state == 'error'" 
                                       decoration-muted="state == 'pending'">
                                     <field name="sequence" widget="handle"/>
@@ -56,13 +56,13 @@
                                            decoration-success="state == 'valid'" 
                                            decoration-danger="state == 'error'" 
                                            decoration-info="state == 'pending'"/>
-                                    <field name="error_message" attrs="{'invisible': [('state', '!=', 'error')]}"/>
-                                </tree>
+                                    <field name="error_message" modifiers="{'invisible': [('state', '!=', 'error')]}"/>
+                                </list>
                             </field>
-                            <div class="alert alert-info" role="status" attrs="{'invisible': [('state', '=', 'preview')]}">
+                            <div class="alert alert-info" role="status" modifiers="{'invisible': [('state', '=', 'preview')]}">
                                 <p>Click on 'Preview Execution' to validate workflow parameters and see which templates will be executed.</p>
                             </div>
-                            <div class="alert alert-success" role="status" attrs="{'invisible': [('state', '!=', 'preview')]}">
+                            <div class="alert alert-success" role="status" modifiers="{'invisible': [('state', '!=', 'preview')]}">
                                 <p>Green rows will be executed. You can now click 'Execute Workflow' to create journal entries.</p>
                             </div>
                         </page>
@@ -74,12 +74,12 @@
                             string="Preview Execution" 
                             type="object" 
                             class="btn-primary" 
-                            attrs="{'invisible': [('state', '=', 'preview')]}"/>
+                            modifiers="{'invisible': [('state', '=', 'preview')]}"/>
                     <button name="action_execute" 
                             string="Execute Workflow" 
                             type="object" 
                             class="btn-primary"
-                            attrs="{'invisible': [('state', '!=', 'preview')]}"/>
+                            modifiers="{'invisible': [('state', '!=', 'preview')]}"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

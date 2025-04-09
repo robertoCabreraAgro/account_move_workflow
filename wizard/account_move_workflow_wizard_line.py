@@ -1,5 +1,4 @@
-from odoo import models, fields, api
-
+from odoo import api, fields, models, _
 
 class AccountMoveWorkflowWizardLine(models.TransientModel):
     _name = 'account.move.workflow.wizard.line'
@@ -17,7 +16,7 @@ class AccountMoveWorkflowWizardLine(models.TransientModel):
         ('pending', 'Pending')
     ], default='pending')
     error_message = fields.Text()
-    template_line_id = fields.Many2one('account.workflow.template.line', string='Template Line')
+    template_line_id = fields.Many2one('account.move.workflow.template.line', string='Template Line')
     
     @api.onchange('template_id')
     def _onchange_template_id(self):

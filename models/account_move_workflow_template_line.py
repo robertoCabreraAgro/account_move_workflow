@@ -1,6 +1,6 @@
-# models/account_move_template_line.py
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools.safe_eval import safe_eval
 
 
 class AccountMoveWorkflowTemplateLine(models.Model):
@@ -51,3 +51,4 @@ class AccountMoveWorkflowTemplateLine(models.Model):
                 safe_eval(line.overwrite, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
             except (SyntaxError, ValueError) as e:
                 raise ValidationError(_("Invalid Python syntax in overwrite values: %s\nError: %s") % (line.overwrite, str(e)))
+

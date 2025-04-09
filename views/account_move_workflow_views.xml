@@ -1,10 +1,11 @@
-<record id="view_account_move_workflow_form" model="ir.ui.view">
+<odoo>
+    <record id="view_account_move_workflow_form" model="ir.ui.view">
         <field name="name">account.move.workflow.form</field>
         <field name="model">account.move.workflow</field>
         <field name="arch" type="xml">
             <form string="Accounting Workflow">
                 <header>
-                    <button name="action_open_wizard" string="Execute Workflow" type="object" class="oe_highlight" attrs="{'invisible': [('active', '=', False)]}"/>
+                    <button name="action_open_wizard" string="Execute Workflow" type="object" class="oe_highlight" modifiers="{'invisible': [('active', '=', False)]}"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -35,20 +36,20 @@
                     <notebook>
                         <page string="Templates">
                             <field name="template_line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="template_id" options="{'no_create': True}"/>
                                     <field name="condition"/>
                                     <field name="skip_on_error"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Description">
                             <field name="note" placeholder="Description of the workflow purpose and usage..."/>
                         </page>
-                        <page string="Generated Entries" attrs="{'invisible': [('generated_move_ids', '=', [])]}">
+                        <page string="Generated Entries" modifiers="{'invisible': [('generated_move_ids', '=', [])]}">
                             <field name="generated_move_ids" readonly="1">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="date"/>
                                     <field name="ref"/>
@@ -58,7 +59,7 @@
                                     <field name="currency_id" invisible="1"/>
                                     <field name="workflow_sequence"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -89,8 +90,8 @@
 
     <!-- Template Line Form View -->
     <record id="view_account_workflow_template_line_form" model="ir.ui.view">
-        <field name="name">account.workflow.template.line.form</field>
-        <field name="model">account.workflow.template.line</field>
+        <field name="name">account.move.workflow.template.line.form</field>
+        <field name="model">account.move.workflow.template.line</field>
         <field name="arch" type="xml">
             <form string="Workflow Template Line">
                 <sheet>

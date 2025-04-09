@@ -77,7 +77,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if self.workflow_id:
             self.currency_id = self.workflow_id.currency_id
             
-            # Actualizar previsualizaciones de plantillas
+            # Update template previews
             template_lines = self.workflow_id.template_line_ids.sorted(lambda l: l.sequence)
             preview_vals = []
             
@@ -85,12 +85,13 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 preview_vals.append({
                     'sequence': line.sequence,
                     'template_id': line.template_id.id,
+                    'template_line_id': line.id,
                     'condition': line.condition,
                     'will_execute': True,
                     'state': 'pending'
                 })
             
-            # Borrar líneas existentes y crear las nuevas
+            # Delete existing lines and create new ones
             self.template_preview_ids = [(5, 0, 0)]
             for val in preview_vals:
                 self.template_preview_ids = [(0, 0, val)]
@@ -144,10 +145,10 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         # Validate required fields
         self._validate_workflow_requirements()
         
-        # Actualizar estado de plantillas
+        # Update template states
         self._onchange_parameters()
         
-        # Establecer estado de previsualización
+        # Set preview state
         self.write({'state': 'preview'})
         
         return {
@@ -186,10 +187,10 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     _logger.info(f"Skipping template {line.template_id.name}: condition not met")
                     continue
                 
-                # Preparar contexto para ejecutar la plantilla
+                # Prepare context for executing the template
                 template = line.template_id
                 
-                # Usar el módulo account_move_template_run para generar el asiento
+                # Use the account_move_template_run module to generate the entry
                 wizard_vals = {
                     'template_id': template.id,
                     'date': self.date,
@@ -198,29 +199,29 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'ref': f"{workflow_ref}/{sequence}",
                 }
                 
-                # Si hay un overwrite definido, añadirlo
+                # If overwrite is defined, add it
                 if line.overwrite:
                     overwrite_dict = safe_eval(line.overwrite, eval_context)
                     wizard_vals['overwrite'] = str(overwrite_dict)
                 
-                # Crear y ejecutar el wizard para esta plantilla
+                # Create and execute the wizard for this template
                 template_run = self.env['account.move.template.run'].create(wizard_vals)
                 template_run.load_lines()
                 
-                # Establecer los montos según la configuración
-                # En una implementación completa, esto debería seguir una lógica configurable
+                # Set amounts according to configuration
+                # In a complete implementation, this should follow configurable logic
                 if self.amount and template_run.line_ids:
-                    # Asignar el monto a la primera línea de tipo input
+                    # Assign amount to the first line of type input
                     input_lines = template_run.line_ids.filtered(lambda l: l.move_line_type == 'dr')
                     if input_lines:
                         input_lines[0].amount = self.amount
                 
-                # Generar el asiento
+                # Generate the entry
                 result = template_run.generate_move()
                 if result and result.get('res_id'):
                     move = self.env['account.move'].browse(result['res_id'])
                     
-                    # Actualizar datos del asiento
+                    # Update entry data
                     move.write({
                         'workflow_id': self.workflow_id.id,
                         'workflow_sequence': sequence,
@@ -228,7 +229,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     
                     created_moves += move
                     
-                    # Actualizar el contexto para la siguiente plantilla
+                    # Update context for next template
                     eval_context['previous_moves'] = created_moves
                     
                 sequence += 1
@@ -236,7 +237,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             except Exception as e:
                 _logger.error(f"Error executing workflow template {line.template_id.name}: {str(e)}")
                 if not line.skip_on_error:
-                    # Si no se debe omitir errores, revertir todo
+                    # If errors should not be skipped, reverse everything
                     created_moves.button_draft()
                     created_moves.unlink()
                     raise UserError(_(
@@ -247,14 +248,14 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                         'error': str(e)
                     })
         
-        # Crear relaciones entre asientos
+        # Create relations between entries
         if len(created_moves) > 1:
             for move in created_moves:
                 related_moves = created_moves - move
                 if related_moves:
                     move.write({'related_move_ids': [(6, 0, related_moves.ids)]})
         
-        # Mostrar los asientos creados
+        # Display created entries
         if not created_moves:
             raise UserError(_("No journal entries were created. Please check template conditions."))
             
@@ -262,7 +263,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             'name': _('Generated Journal Entries'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.move',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('id', 'in', created_moves.ids)],
             'context': {'create': False}
         }
@@ -299,7 +300,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             
         # Check if partner has proper accounts for the currency
         if self.partner_id:
-            # Verificar que el partner tenga cuentas configuradas
+            # Check that the partner has configured accounts
             if not self.partner_id.property_account_receivable_id:
                 errors.append(_("Partner %s doesn't have a receivable account configured.") % self.partner_id.name)
             if not self.partner_id.property_account_payable_id:
