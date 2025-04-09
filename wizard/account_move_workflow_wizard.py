@@ -199,7 +199,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 }
                 
                 # Si hay un overwrite definido, añadirlo
-                if hasattr(line, 'overwrite') and line.overwrite:
+                if line.overwrite:
                     wizard_vals['overwrite'] = line.overwrite
                 
                 # Crear y ejecutar el wizard para esta plantilla
