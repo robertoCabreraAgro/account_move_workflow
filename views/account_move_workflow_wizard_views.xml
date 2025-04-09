@@ -85,12 +85,4 @@
             </form>
         </field>
     </record>
-    
-    <!-- Action para abrir el wizard desde el menú -->
-    <record id="action_run_workflow" model="ir.actions.act_window">
-        <field name="name">Execute Accounting Workflow</field>
-        <field name="res_model">account.move.workflow.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
 </odoo>

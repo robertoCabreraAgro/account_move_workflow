@@ -193,14 +193,15 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 wizard_vals = {
                     'template_id': template.id,
                     'date': self.date,
-                    'journal_id': template.journal_id.id,
+                    'journal_id': template.journal_id.id if template.journal_id else self.journal_id.id,
                     'partner_id': self.partner_id.id if self.partner_id else False,
                     'ref': f"{workflow_ref}/{sequence}",
                 }
                 
                 # Si hay un overwrite definido, añadirlo
                 if line.overwrite:
-                    wizard_vals['overwrite'] = line.overwrite
+                    overwrite_dict = safe_eval(line.overwrite, eval_context)
+                    wizard_vals['overwrite'] = str(overwrite_dict)
                 
                 # Crear y ejecutar el wizard para esta plantilla
                 template_run = self.env['account.move.template.run'].create(wizard_vals)

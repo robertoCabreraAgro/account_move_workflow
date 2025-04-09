@@ -1,42 +1,53 @@
-from odoo import api, fields, models, _
+# models/account_move_template_line.py
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
-class AccountMoveTemplate(models.Model):
-    _inherit = 'account.move.template'
-    
-    company_id = fields.Many2one(
-        'res.company',
-        string='Company',
-        default=lambda self: self.env.company,
-        required=True
+class AccountMoveWorkflowTemplateLine(models.Model):
+    _name = 'account.move.workflow.template.line'
+    _description = 'Workflow Template Line'
+    _order = 'sequence, id'
+
+    workflow_id = fields.Many2one(
+        'account.move.workflow',
+        string='Workflow',
+        required=True,
+        ondelete='cascade'
+    )
+    template_id = fields.Many2one(
+        'account.move.template',
+        string='Move Template',
+        required=True,
+        domain="[('company_id', '=', parent.company_id)]"
+    )
+    sequence = fields.Integer(default=10)
+    condition = fields.Char(
+        string='Condition',
+        help="Python condition to evaluate if this template should be applied. "
+             "Available variables: partner, amount, currency, date, previous_moves"
+    )
+    skip_on_error = fields.Boolean(
+        string='Skip on Error',
+        help='If checked, workflow will continue even if this template fails'
+    )
+    overwrite = fields.Text(
+        string='Overwrite Values',
+        help="Python dictionary to overwrite template line values. Format: "
+             "{'L1': {'amount': 100, 'name': 'Description'}, 'L2': {...}}"
     )
     
-    workflow_line_ids = fields.One2many(
-        'account.workflow.template.line',
-        'template_id',
-        string='Used in Workflows'
-    )
-    
-    def _compute_workflow_count(self):
-        """Compute the number of workflows this template is used in"""
-        for template in self:
-            template.workflow_count = len(template.workflow_line_ids)
-    
-    workflow_count = fields.Integer(
-        string='# Workflows',
-        compute='_compute_workflow_count'
-    )
-    
-    def action_view_workflows(self):
-        """View workflows where this template is used"""
-        self.ensure_one()
-        workflows = self.workflow_line_ids.mapped('workflow_id')
-        action = self.env.ref('account_move_workflow.action_account_move_workflow').read()[0]
-        
-        if len(workflows) == 1:
-            action['views'] = [(self.env.ref('account_move_workflow.view_account_move_workflow_form').id, 'form')]
-            action['res_id'] = workflows.id
-        else:
-            workflow_ids = [int(wid) for wid in workflows.ids if isinstance(wid, (int, str)) and str(wid).isdigit()]
-            action['domain'] = [('id', 'in', workflow_ids)]        
-        return action
+    @api.constrains('condition')
+    def _check_condition_syntax(self):
+        for line in self.filtered(lambda l: l.condition):
+            try:
+                safe_eval(line.condition, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
+            except (SyntaxError, ValueError) as e:
+                raise ValidationError(_("Invalid Python syntax in condition: %s\nError: %s") % (line.condition, str(e)))
+                
+    @api.constrains('overwrite')
+    def _check_overwrite_syntax(self):
+        for line in self.filtered(lambda l: l.overwrite):
+            try:
+                safe_eval(line.overwrite, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
+            except (SyntaxError, ValueError) as e:
+                raise ValidationError(_("Invalid Python syntax in overwrite values: %s\nError: %s") % (line.overwrite, str(e)))
