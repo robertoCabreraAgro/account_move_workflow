@@ -299,13 +299,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             ) % {'amount': self.amount, 'max': workflow.amount_max})
             
         # Check if partner has proper accounts for the currency
-        if self.partner_id:
-            # Check that the partner has configured accounts
-            if not self.partner_id.property_account_receivable_id:
-                errors.append(_("Partner %s doesn't have a receivable account configured.") % self.partner_id.name)
-            if not self.partner_id.property_account_payable_id:
-                errors.append(_("Partner %s doesn't have a payable account configured.") % self.partner_id.name)
-        
+      
         # Check templates existence
         if not workflow.template_line_ids:
             errors.append(_("This workflow doesn't have any templates configured."))
