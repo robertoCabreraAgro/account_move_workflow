@@ -51,4 +51,3 @@ class AccountMoveWorkflowTemplateLine(models.Model):
                 safe_eval(line.overwrite, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
             except (SyntaxError, ValueError) as e:
                 raise ValidationError(_("Invalid Python syntax in overwrite values: %s\nError: %s") % (line.overwrite, str(e)))
-
