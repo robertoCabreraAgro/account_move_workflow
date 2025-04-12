@@ -162,7 +162,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         }
     
     def action_execute(self):
-        """Execute the workflow and create journal entries"""
+        """Execute the workflow and create journal entries via templates"""
         self.ensure_one()
         
         # Validate required fields
@@ -187,41 +187,52 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     _logger.info(f"Skipping template {line.template_id.name}: condition not met")
                     continue
                 
-                # Prepare context for executing the template
+                # Get the template
                 template = line.template_id
                 
                 # Use the account_move_template_run module to generate the entry
                 wizard_vals = {
                     'template_id': template.id,
                     'date': self.date,
+                    # Usar el diario del template si existe, o el diario del wizard como respaldo
                     'journal_id': template.journal_id.id if template.journal_id else self.journal_id.id,
-                    'partner_id': self.partner_id.id if self.partner_id else False,
+                    'partner_id': self.partner_id.id if self.partner_id else template.partner_id.id if template.partner_id else False,
                     'ref': f"{workflow_ref}/{sequence}",
+                    # Usar el move_type del template
+                    'move_type': template.move_type,
                 }
                 
-                # If overwrite is defined, add it
+                # Si el template tiene fecha propia, usarla en lugar de la fecha del wizard
+                if hasattr(template, 'date') and template.date:
+                    wizard_vals['date'] = template.date
+                
+                # Si overwrite está definido, añadirlo
                 if line.overwrite:
                     overwrite_dict = safe_eval(line.overwrite, eval_context)
                     wizard_vals['overwrite'] = str(overwrite_dict)
                 
-                # Create and execute the wizard for this template
+                # Crear y ejecutar el wizard para este template
                 template_run = self.env['account.move.template.run'].create(wizard_vals)
-                template_run.load_lines()
                 
-                # Set amounts according to configuration
-                # In a complete implementation, this should follow configurable logic
-                if self.amount and template_run.line_ids:
-                    # Assign amount to the first line of type input
-                    input_lines = template_run.line_ids.filtered(lambda l: l.move_line_type == 'dr')
+                # El método load_lines carga las líneas del template
+                result = template_run.load_lines()
+                
+                # Si se necesita sobrescribir los valores después de cargar líneas
+                if hasattr(template_run, 'line_ids') and template_run.line_ids and self.amount:
+                    # Asignar montos según configuración
+                    # Solo sobrescribimos si hay líneas de tipo input
+                    input_lines = template_run.line_ids.filtered(lambda l: hasattr(l, 'template_type') and l.template_type == 'input')
                     if input_lines:
+                        # Asignar el monto a la primera línea de tipo input
                         input_lines[0].amount = self.amount
                 
-                # Generate the entry
-                result = template_run.generate_move()
-                if result and result.get('res_id'):
-                    move = self.env['account.move'].browse(result['res_id'])
+                # Generar el asiento usando el propio método del template
+                move_result = template_run.with_context(**result.get('context', {})).generate_move()
+                
+                if move_result and move_result.get('res_id'):
+                    move = self.env['account.move'].browse(move_result['res_id'])
                     
-                    # Update entry data
+                    # Actualizar datos del asiento
                     move.write({
                         'workflow_id': self.workflow_id.id,
                         'workflow_sequence': sequence,
@@ -229,7 +240,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     
                     created_moves += move
                     
-                    # Update context for next template
+                    # Actualizar el contexto para el siguiente template
                     eval_context['previous_moves'] = created_moves
                     
                 sequence += 1
@@ -237,7 +248,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             except Exception as e:
                 _logger.error(f"Error executing workflow template {line.template_id.name}: {str(e)}")
                 if not line.skip_on_error:
-                    # If errors should not be skipped, reverse everything
+                    # Si no se deben ignorar errores, revertir todo
                     created_moves.button_draft()
                     created_moves.unlink()
                     raise UserError(_(
@@ -248,14 +259,14 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                         'error': str(e)
                     })
         
-        # Create relations between entries
+        # Crear relaciones entre asientos
         if len(created_moves) > 1:
             for move in created_moves:
                 related_moves = created_moves - move
                 if related_moves:
                     move.write({'related_move_ids': [(6, 0, related_moves.ids)]})
         
-        # Display created entries
+        # Mostrar asientos creados
         if not created_moves:
             raise UserError(_("No journal entries were created. Please check template conditions."))
             
@@ -298,8 +309,6 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 "Amount (%(amount)s) is above maximum allowed (%(max)s)."
             ) % {'amount': self.amount, 'max': workflow.amount_max})
             
-        # Check if partner has proper accounts for the currency
-      
         # Check templates existence
         if not workflow.template_line_ids:
             errors.append(_("This workflow doesn't have any templates configured."))
