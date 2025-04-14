@@ -16,8 +16,10 @@
                         <field name="require_partner" invisible="1"/>
                         <field name="require_amount" invisible="1"/>
                         <field name="source_move_id" invisible="1"/>
-                        <field name="source_move_name" readonly="1" 
-                               modifiers="{'invisible': [('source_move_name', '=', False)]}"/>
+                        <field name="reference" 
+                            readonly="1" 
+                            placeholder="Optional reference" 
+                            modifiers="{'readonly': [('state', '=', 'preview')]}"/>
                     </group>
                     
                     <group modifiers="{'invisible': [('workflow_id', '=', False)]}">
@@ -29,7 +31,6 @@
                                    modifiers="{'invisible': [('workflow_id', '=', False)], 
                                            'readonly': [('state', '=', 'preview')]}" 
                                    options="{'no_create': True}"/>
-                            <field name="reference" placeholder="Optional reference" modifiers="{'readonly': [('state', '=', 'preview')]}"/>
                         </group>
                     </group>
                     

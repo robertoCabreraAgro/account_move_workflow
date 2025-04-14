@@ -1,80 +1,115 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_account_move_workflow_wizard_form" model="ir.ui.view">
-        <field name="name">account.move.workflow.wizard.form</field>
-        <field name="model">account.move.workflow.wizard</field>
+    <record id="view_account_move_workflow_form" model="ir.ui.view">
+        <field name="name">account.move.workflow.form</field>
+        <field name="model">account.move.workflow</field>
         <field name="arch" type="xml">
-            <form string="Execute Accounting Workflow">
-                <field name="state" invisible="1"/>
-                
+            <form string="Accounting Workflow">
+                <header>
+                    <button name="action_open_wizard" string="Execute Workflow" type="object" class="oe_highlight" modifiers="{'invisible': [('active', '=', False)]}"/>
+                </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
+                        </button>
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                            <field name="generated_move_count" string="Moves" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. Customer Payment Process"/>
+                        </h1>
+                    </div>
                     <group>
-                        <field name="workflow_id" options="{'no_create': True}"
-                               domain="[('company_id', '=', company_id), ('active', '=', True)]"
-                               modifiers="{'readonly': [('state', '=', 'preview')]}"/>
-                        <field name="company_id" invisible="1"/>
-                        <field name="require_partner" invisible="1"/>
-                        <field name="require_amount" invisible="1"/>
-                        <field name="source_move_id" invisible="1"/>
-                        <field name="source_move_name" readonly="1" 
-                               modifiers="{'invisible': [('source_move_name', '=', False)]}"/>
-                    </group>
-                    
-                    <group modifiers="{'invisible': [('workflow_id', '=', False)]}">
                         <group>
-                            <field name="amount" 
-                                   modifiers="{'required': [('require_amount', '=', True)], 
-                                           'readonly': [('state', '=', 'preview')]}"/>
-                            <field name="price_unit" 
-                                   modifiers="{'readonly': [('state', '=', 'preview')]}"/>
-                            <field name="currency_id" 
-                                   modifiers="{'invisible': [('workflow_id', '=', False)], 
-                                           'readonly': [('state', '=', 'preview')]}" 
-                                   options="{'no_create': True}"/>
-                            <field name="reference" placeholder="Optional reference" modifiers="{'readonly': [('state', '=', 'preview')]}"/>
+                            <field name="code"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="partner_required"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" options="{'no_create': True}"/>
                         </group>
                     </group>
-                    
-                    <notebook modifiers="{'invisible': [('workflow_id', '=', False)]}">
-                        <page string="Templates to Execute">
-                            <field name="template_preview_ids" widget="one2many">
-                                <list decoration-success="will_execute and state == 'valid'" 
-                                      decoration-danger="(not will_execute) or state == 'error'" 
-                                      decoration-muted="state == 'pending'">
+                    <notebook>
+                        <page string="Templates">
+                            <field name="template_line_ids">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="template_id"/>
+                                    <field name="template_id" options="{'no_create': True}"/>
                                     <field name="condition"/>
-                                    <field name="will_execute"/>
-                                    <field name="state" widget="badge" 
-                                           decoration-success="state == 'valid'" 
-                                           decoration-danger="state == 'error'" 
-                                           decoration-info="state == 'pending'"/>
-                                    <field name="error_message" modifiers="{'invisible': [('state', '!=', 'error')]}"/>
+                                    <field name="skip_on_error"/>
                                 </list>
                             </field>
-                            <div class="alert alert-info" role="status" modifiers="{'invisible': [('state', '=', 'preview')]}">
-                                <p>Click on 'Preview Execution' to validate workflow parameters and see which templates will be executed.</p>
-                            </div>
-                            <div class="alert alert-success" role="status" modifiers="{'invisible': [('state', '!=', 'preview')]}">
-                                <p>Green rows will be executed. You can now click 'Execute Workflow' to create journal entries.</p>
-                            </div>
+                        </page>
+                        <page string="Description">
+                            <field name="note" placeholder="Description of the workflow purpose and usage..."/>
+                        </page>
+                        <page string="Generated Entries" modifiers="{'invisible': [('generated_move_ids', '=', [])]}">
+                            <field name="generated_move_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="ref"/>
+                                    <field name="journal_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="amount_total"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="workflow_sequence"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
-                
-                <footer>
-                    <button name="action_preview" 
-                            string="Preview Execution" 
-                            type="object" 
-                            class="btn-primary" 
-                            modifiers="{'invisible': [('state', '=', 'preview')]}"/>
-                    <button name="action_execute" 
-                            string="Execute Workflow" 
-                            type="object" 
-                            class="btn-primary"
-                            modifiers="{'invisible': [('state', '!=', 'preview')]}"/>
-                    <button special="cancel" string="Cancel" class="btn-secondary"/>
-                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_account_move_workflow_search" model="ir.ui.view">
+        <field name="name">account.move.workflow.search</field>
+        <field name="model">account.move.workflow</field>
+        <field name="arch" type="xml">
+            <search string="Search Accounting Workflows">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <separator/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <filter string="Partner Required" name="partner_required" domain="[('partner_required', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Currency" name="currency" domain="[]" context="{'group_by': 'currency_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Template Line Form View -->
+    <record id="view_account_workflow_template_line_form" model="ir.ui.view">
+        <field name="name">account.move.workflow.template.line.form</field>
+        <field name="model">account.move.workflow.template.line</field>
+        <field name="arch" type="xml">
+            <form string="Workflow Template Line">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="workflow_id"/>
+                            <field name="template_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="skip_on_error"/>
+                        </group>
+                    </group>
+                    <group string="Condition">
+                        <field name="condition" placeholder="e.g. amount > 1000 and partner.customer_rank > 0" nolabel="1"/>
+                    </group>
+                    <group string="Overwrite Values">
+                        <field name="overwrite" placeholder="e.g. {'L1': {'amount': amount, 'name': 'Custom Label'}}" nolabel="1"/>
+                    </group>
+                </sheet>
             </form>
         </field>
     </record>

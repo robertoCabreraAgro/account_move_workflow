@@ -217,14 +217,11 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 wizard_vals = {
                     'template_id': template.id,
                     'date': self.date,
-                    # Usar el diario del template si existe, o el diario del wizard como respaldo
                     'journal_id': template.journal_id.id if template.journal_id else self.journal_id.id,
                     'partner_id': self.partner_id.id if self.partner_id else template.partner_id.id if template.partner_id else False,
                     'ref': f"{workflow_ref}/{sequence}" if self.reference else f"{self.source_move_name or ''} - {template.name}",
-                    # Usar el move_type del template
                     'move_type': template.move_type,
-                    # Transferir price_unit
-                    'price_unit': self.price_unit,
+                    'price_unit': self.price_unit or self.amount,  # Asegurar que price_unit siempre tenga un valor
                 }
                 
                 # Si el template tiene fecha propia, usarla en lugar de la fecha del wizard
@@ -243,13 +240,18 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 result = template_run.load_lines()
                 
                 # Si se necesita sobrescribir los valores después de cargar líneas
-                if hasattr(template_run, 'line_ids') and template_run.line_ids and self.amount:
+                if hasattr(template_run, 'line_ids') and template_run.line_ids:
                     # Asignar montos según configuración
                     # Solo sobrescribimos si hay líneas de tipo input
                     input_lines = template_run.line_ids.filtered(lambda l: hasattr(l, 'template_type') and l.template_type == 'input')
                     if input_lines:
                         # Asignar el monto a la primera línea de tipo input
                         input_lines[0].amount = self.amount
+                        
+                    # También asignar el price_unit a todas las líneas del wizard
+                    for line in template_run.line_ids:
+                        if hasattr(line, 'price_unit'):
+                            line.price_unit = self.price_unit or self.amount
                 
                 # Generar el asiento usando el propio método del template
                 move_result = template_run.with_context(**result.get('context', {})).generate_move()
@@ -264,9 +266,9 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     })
                     
                     # Actualizar el price_unit en todas las líneas del asiento creado
-                    if self.price_unit:
+                    if self.price_unit or self.amount:
                         for move_line in move.line_ids:
-                            move_line.price_unit = self.price_unit
+                            move_line.price_unit = self.price_unit or self.amount
                     
                     created_moves += move
                     
@@ -316,7 +318,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             })
             
         return action
-    
+
     def _validate_workflow_requirements(self):
         """Validate all workflow requirements before execution"""
         self.ensure_one()
