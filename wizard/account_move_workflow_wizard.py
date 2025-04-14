@@ -46,6 +46,10 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         string='Source Move',
         help='Journal entry that triggered this workflow'
     )
+    source_move_name = fields.Char(
+        string='Source Entry Name',
+        help='Name/Number of the journal entry that triggered this workflow'
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('preview', 'Preview')
@@ -136,6 +140,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             'env': self.env,
             'user': self.env.user,
             'company': self.company_id,
+            'source_name': self.source_move_name,
         }
     
     def action_preview(self):
@@ -178,6 +183,8 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         
         # Create a workflow reference
         workflow_ref = f"WORKFLOW/{self.workflow_id.code or self.workflow_id.name[:5]}/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        if self.source_move_name:
+            workflow_ref = f"{workflow_ref}/{self.source_move_name}"
         
         sequence = 1
         for line in templates:
@@ -197,7 +204,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     # Usar el diario del template si existe, o el diario del wizard como respaldo
                     'journal_id': template.journal_id.id if template.journal_id else self.journal_id.id,
                     'partner_id': self.partner_id.id if self.partner_id else template.partner_id.id if template.partner_id else False,
-                    'ref': f"{workflow_ref}/{sequence}",
+                    'ref': f"{workflow_ref}/{sequence}" if self.reference else f"{self.source_move_name or ''} - {template.name}",
                     # Usar el move_type del template
                     'move_type': template.move_type,
                 }
@@ -297,17 +304,6 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         # Check partner if required
         if workflow.partner_required and not self.partner_id:
             errors.append(_("Partner is required for this workflow."))
-        
-        # Check amount limits
-        if workflow.amount_min > 0 and self.amount < workflow.amount_min:
-            errors.append(_(
-                "Amount (%(amount)s) is below minimum allowed (%(min)s)."
-            ) % {'amount': self.amount, 'min': workflow.amount_min})
-        
-        if workflow.amount_max > 0 and self.amount > workflow.amount_max:
-            errors.append(_(
-                "Amount (%(amount)s) is above maximum allowed (%(max)s)."
-            ) % {'amount': self.amount, 'max': workflow.amount_max})
             
         # Check templates existence
         if not workflow.template_line_ids:

@@ -16,20 +16,11 @@
                         <field name="require_partner" invisible="1"/>
                         <field name="require_amount" invisible="1"/>
                         <field name="source_move_id" invisible="1"/>
+                        <field name="source_move_name" readonly="1" 
+                               modifiers="{'invisible': [('source_move_name', '=', False)]}"/>
                     </group>
                     
                     <group modifiers="{'invisible': [('workflow_id', '=', False)]}">
-                        <group>
-                            <field name="partner_id" 
-                                   modifiers="{'required': [('require_partner', '=', True)], 
-                                           'readonly': [('state', '=', 'preview')]}" 
-                                   options="{'no_create': True}"/>
-                            <field name="date" required="1" modifiers="{'readonly': [('state', '=', 'preview')]}"/>
-                            <field name="journal_id" 
-                                   modifiers="{'invisible': [('workflow_id', '=', False)], 
-                                           'readonly': [('state', '=', 'preview')]}" 
-                                   options="{'no_create': True}"/>
-                        </group>
                         <group>
                             <field name="amount" 
                                    modifiers="{'required': [('require_amount', '=', True)], 

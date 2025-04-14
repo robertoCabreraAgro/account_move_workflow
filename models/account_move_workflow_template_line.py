@@ -24,7 +24,7 @@ class AccountMoveWorkflowTemplateLine(models.Model):
     condition = fields.Char(
         string='Condition',
         help="Python condition to evaluate if this template should be applied. "
-             "Available variables: partner, amount, currency, date, previous_moves"
+             "Available variables: partner, amount, currency, date, source_name, previous_moves"
     )
     skip_on_error = fields.Boolean(
         string='Skip on Error',
@@ -40,7 +40,15 @@ class AccountMoveWorkflowTemplateLine(models.Model):
     def _check_condition_syntax(self):
         for line in self.filtered(lambda l: l.condition):
             try:
-                safe_eval(line.condition, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
+                safe_eval(line.condition, {
+                    'partner': None, 
+                    'amount': 0, 
+                    'currency': None, 
+                    'date': None, 
+                    'source_name': '',  # Añadimos source_name
+                    'previous_moves': [], 
+                    'env': self.env
+                })
             except (SyntaxError, ValueError) as e:
                 raise ValidationError(_("Invalid Python syntax in condition: %s\nError: %s") % (line.condition, str(e)))
                 
@@ -48,6 +56,14 @@ class AccountMoveWorkflowTemplateLine(models.Model):
     def _check_overwrite_syntax(self):
         for line in self.filtered(lambda l: l.overwrite):
             try:
-                safe_eval(line.overwrite, {'partner': None, 'amount': 0, 'currency': None, 'date': None, 'previous_moves': [], 'env': self.env})
+                safe_eval(line.overwrite, {
+                    'partner': None, 
+                    'amount': 0, 
+                    'currency': None, 
+                    'date': None, 
+                    'source_name': '',  # Añadimos source_name 
+                    'previous_moves': [], 
+                    'env': self.env
+                })
             except (SyntaxError, ValueError) as e:
                 raise ValidationError(_("Invalid Python syntax in overwrite values: %s\nError: %s") % (line.overwrite, str(e)))

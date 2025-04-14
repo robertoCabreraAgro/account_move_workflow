@@ -61,5 +61,6 @@ class AccountMove(models.Model):
                 'default_currency_id': self.currency_id.id,
                 'default_amount': self.amount_total,
                 'default_date': self.date,
+                'default_source_move_name': self.name,  
             }
         }
