@@ -69,6 +69,12 @@ class AccountMoveWorkflowWizard(models.TransientModel):
     reference = fields.Char(string="Reference")
     require_partner = fields.Boolean(compute='_compute_requirements')
     require_amount = fields.Boolean(compute='_compute_requirements')
+    
+    # Añadimos el campo price_unit para transferirlo a las líneas del asiento
+    price_unit = fields.Float(
+        string='Unit Price',
+        help='Price per unit to be transferred to the generated move lines'
+    )
 
     @api.depends('workflow_id')
     def _compute_requirements(self):
@@ -105,6 +111,16 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'title': _('Partner Required'),
                     'message': _('This workflow requires selecting a partner.')
                 }}
+                
+            # Si hay un amount, transferirlo al price_unit
+            if self.amount:
+                self.price_unit = self.amount
+    
+    @api.onchange('amount')
+    def _onchange_amount(self):
+        """Transferir amount a price_unit cuando cambia"""
+        if self.amount:
+            self.price_unit = self.amount
     
     @api.onchange('partner_id', 'amount', 'currency_id', 'date')
     def _onchange_parameters(self):
@@ -207,6 +223,8 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'ref': f"{workflow_ref}/{sequence}" if self.reference else f"{self.source_move_name or ''} - {template.name}",
                     # Usar el move_type del template
                     'move_type': template.move_type,
+                    # Transferir price_unit
+                    'price_unit': self.price_unit,
                 }
                 
                 # Si el template tiene fecha propia, usarla en lugar de la fecha del wizard
@@ -244,6 +262,11 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                         'workflow_id': self.workflow_id.id,
                         'workflow_sequence': sequence,
                     })
+                    
+                    # Actualizar el price_unit en todas las líneas del asiento creado
+                    if self.price_unit:
+                        for move_line in move.line_ids:
+                            move_line.price_unit = self.price_unit
                     
                     created_moves += move
                     
