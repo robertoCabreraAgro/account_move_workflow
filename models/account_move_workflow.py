@@ -22,14 +22,6 @@ class AccountMoveWorkflow(models.Model):
         default=lambda self: self.env.company.currency_id,
         help='Default currency for this workflow'
     )
-    amount_min = fields.Float(
-        string='Minimum Amount',
-        help='Minimum amount allowed for this workflow'
-    )
-    amount_max = fields.Float(
-        string='Maximum Amount',
-        help='Maximum amount allowed for this workflow (0 = no limit)'
-    )
     note = fields.Text(string='Description')
     template_line_ids = fields.One2many(
         'account.move.workflow.template.line',
