@@ -11,8 +11,7 @@
                         string="Run Workflow"
                         type="object"
                         class="oe_highlight"
-                        groups="account.group_account_user"
-                        invisible="state != 'posted' or workflow_id == False"/>
+                        groups="account.group_account_user"/>
             </button>
 
             <field name="currency_id" position="after">

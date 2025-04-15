@@ -164,23 +164,6 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             'source_name': self.source_move_name or '',
         }
     
-    def action_preview(self):
-        self.ensure_one()
-        
-        self._validate_workflow_requirements()
-        self._onchange_parameters()
-        self.write({'state': 'preview'})
-        
-        return {
-            'name': _('Preview Workflow Execution'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move.workflow.wizard',
-            'view_mode': 'form',
-            'res_id': self.id,
-            'target': 'new',
-            'context': self.env.context,
-        }
-    
     def action_execute(self):
         self.ensure_one()
         

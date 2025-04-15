@@ -61,16 +61,10 @@
                 </sheet>
 
                 <footer>
-                    <button name="action_preview"
-                            string="Preview Execution"
-                            type="object"
-                            class="btn-primary"
-                            invisible="state == 'preview'"/>
                     <button name="action_execute"
                             string="Execute Workflow"
                             type="object"
-                            class="btn-primary"
-                            invisible="state != 'preview'"/>
+                            class="btn-primary"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>
