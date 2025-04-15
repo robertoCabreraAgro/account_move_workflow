@@ -15,16 +15,15 @@ class AccountMoveWorkflowTemplate(models.Model):
         'template_id',
         string='Used in Workflows'
     )
-    
-    def _compute_workflow_count(self):
-        """Compute the number of workflows this template is used in"""
-        for template in self:
-            template.workflow_count = len(template.workflow_line_ids)
-    
     workflow_count = fields.Integer(
         string='# Workflows',
         compute='_compute_workflow_count'
     )
+
+    def _compute_workflow_count(self):
+        """Compute the number of workflows this template is used in"""
+        for template in self:
+            template.workflow_count = len(template.workflow_line_ids)
     
     def action_view_workflows(self):
         """View workflows where this template is used"""

@@ -14,24 +14,24 @@
             </p>
         </field>
     </record>
-    
+
     <record id="action_run_workflow" model="ir.actions.act_window">
         <field name="name">Execute Accounting Workflow</field>
         <field name="res_model">account.move.workflow.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
-    
+
     <!-- Menu Items -->
     <menuitem id="menu_account_move_workflow"
-        name="Accounting Workflows"
-        parent="account.menu_finance_configuration"
-        action="action_account_move_workflow"
-        sequence="20"/>
+              name="Accounting Workflows"
+              parent="account.menu_finance_configuration"
+              action="action_account_move_workflow"
+              sequence="20"/>
 
-    <menuitem id="menu_run_workflow" 
-        name="Execute Workflow"
-        parent="account.menu_finance_entries"
-        action="action_run_workflow"
-        sequence="10"/>
+    <menuitem id="menu_run_workflow"
+              name="Execute Workflow"
+              parent="account.menu_finance_entries"
+              action="action_run_workflow"
+              sequence="10"/>
 </odoo>

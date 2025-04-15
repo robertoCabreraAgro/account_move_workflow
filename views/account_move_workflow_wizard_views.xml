@@ -6,72 +6,71 @@
         <field name="arch" type="xml">
             <form string="Execute Accounting Workflow">
                 <field name="state" invisible="1"/>
-                
+
                 <sheet>
                     <group>
-                        <field name="workflow_id" options="{'no_create': True}"
+                        <field name="workflow_id"
+                               options="{'no_create': True}"
                                domain="[('company_id', '=', company_id), ('active', '=', True)]"
-                               modifiers="{'readonly': [('state', '=', 'preview')]}"/>
+                               readonly="state == 'preview'"/>
                         <field name="company_id" invisible="1"/>
                         <field name="require_partner" invisible="1"/>
                         <field name="require_amount" invisible="1"/>
                         <field name="source_move_id" invisible="1"/>
-                        <field name="reference" 
-                            readonly="1" 
-                            placeholder="Optional reference" 
-                            modifiers="{'readonly': [('state', '=', 'preview')]}"/>
+                        <field name="reference" invisible="1"/>
                     </group>
-                    
-                    <group modifiers="{'invisible': [('workflow_id', '=', False)]}">
+
+                    <group invisible="workflow_id == False">
                         <group>
-                            <field name="amount" 
-                                   modifiers="{'required': [('require_amount', '=', True)], 
-                                           'readonly': [('state', '=', 'preview')]}"/>
-                            <field name="currency_id" 
-                                   modifiers="{'invisible': [('workflow_id', '=', False)], 
-                                           'readonly': [('state', '=', 'preview')]}" 
+                            <field name="amount"
+                                   required="require_amount == True"
+                                   readonly="state == 'preview'"/>
+                            <field name="currency_id"
+                                   invisible="workflow_id == False"
+                                   readonly="state == 'preview'"
                                    options="{'no_create': True}"/>
                         </group>
                     </group>
-                    
-                    <notebook modifiers="{'invisible': [('workflow_id', '=', False)]}">
+
+                    <notebook invisible="workflow_id == False">
                         <page string="Templates to Execute">
                             <field name="template_preview_ids" widget="one2many">
-                                <list decoration-success="will_execute and state == 'valid'" 
-                                      decoration-danger="(not will_execute) or state == 'error'" 
+                                <list decoration-success="will_execute and state == 'valid'"
+                                      decoration-danger="not will_execute or state == 'error'"
                                       decoration-muted="state == 'pending'">
                                     <field name="sequence" widget="handle"/>
                                     <field name="template_id"/>
                                     <field name="condition"/>
                                     <field name="will_execute"/>
-                                    <field name="state" widget="badge" 
-                                           decoration-success="state == 'valid'" 
-                                           decoration-danger="state == 'error'" 
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'valid'"
+                                           decoration-danger="state == 'error'"
                                            decoration-info="state == 'pending'"/>
-                                    <field name="error_message" modifiers="{'invisible': [('state', '!=', 'error')]}"/>
+                                    <field name="error_message" invisible="state != 'error'"/>
                                 </list>
                             </field>
-                            <div class="alert alert-info" role="status" modifiers="{'invisible': [('state', '=', 'preview')]}">
+
+                            <div class="alert alert-info" role="status" invisible="state == 'preview'">
                                 <p>Click on 'Preview Execution' to validate workflow parameters and see which templates will be executed.</p>
                             </div>
-                            <div class="alert alert-success" role="status" modifiers="{'invisible': [('state', '!=', 'preview')]}">
+                            <div class="alert alert-success" role="status" invisible="state != 'preview'">
                                 <p>Green rows will be executed. You can now click 'Execute Workflow' to create journal entries.</p>
                             </div>
                         </page>
                     </notebook>
                 </sheet>
-                
+
                 <footer>
-                    <button name="action_preview" 
-                            string="Preview Execution" 
-                            type="object" 
-                            class="btn-primary" 
-                            modifiers="{'invisible': [('state', '=', 'preview')]}"/>
-                    <button name="action_execute" 
-                            string="Execute Workflow" 
-                            type="object" 
+                    <button name="action_preview"
+                            string="Preview Execution"
+                            type="object"
                             class="btn-primary"
-                            modifiers="{'invisible': [('state', '!=', 'preview')]}"/>
+                            invisible="state == 'preview'"/>
+                    <button name="action_execute"
+                            string="Execute Workflow"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'preview'"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

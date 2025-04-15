@@ -1,11 +1,12 @@
 <odoo>
+    <!-- Form View -->
     <record id="view_account_move_workflow_form" model="ir.ui.view">
         <field name="name">account.move.workflow.form</field>
         <field name="model">account.move.workflow</field>
         <field name="arch" type="xml">
             <form string="Accounting Workflow">
                 <header>
-                    <button name="action_open_wizard" string="Execute Workflow" type="object" class="oe_highlight" modifiers="{'invisible': [('active', '=', False)]}"/>
+                    <button name="action_open_wizard" string="Execute Workflow" type="object" class="oe_highlight" invisible="not active"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -45,7 +46,7 @@
                         <page string="Description">
                             <field name="note" placeholder="Description of the workflow purpose and usage..."/>
                         </page>
-                        <page string="Generated Entries" modifiers="{'invisible': [('generated_move_ids', '=', [])]}">
+                        <page string="Generated Entries" invisible="not generated_move_ids">
                             <field name="generated_move_ids" readonly="1">
                                 <list>
                                     <field name="name"/>
@@ -54,7 +55,7 @@
                                     <field name="journal_id"/>
                                     <field name="partner_id"/>
                                     <field name="amount_total"/>
-                                    <field name="currency_id" invisible="1"/>
+                                    <field name="currency_id" column_invisible="1"/>
                                     <field name="workflow_sequence"/>
                                     <field name="state"/>
                                 </list>
