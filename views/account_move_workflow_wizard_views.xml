@@ -36,7 +36,6 @@
                         <page string="Templates to Execute">
                             <field name="line_ids" widget="one2many">
                                 <list>
-                                    <field name="sequence" widget="handle"/>
                                     <field name="template_id"/>
                                     <field name="condition"/>
                                     <field name="will_execute"/>

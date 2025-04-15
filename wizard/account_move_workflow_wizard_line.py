@@ -2,7 +2,7 @@ from odoo import api, fields, models, _
 
 class AccountMoveWorkflowWizardLine(models.TransientModel):
     _name = 'account.move.workflow.wizard.line'
-    _description = 'Workflow Wizard Line Preview'
+    _description = 'Workflow Wizard Line'
     _order = 'sequence, id'
 
     wizard_id = fields.Many2one(

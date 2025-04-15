@@ -6,7 +6,7 @@ from odoo.tools.safe_eval import safe_eval
 class AccountMoveWorkflowTemplate(models.Model):
     _name = 'account.move.workflow.template'
     _description = 'Workflow Template'
-    _order = 'sequence, id'
+    _order = 'id'
     _check_company_auto = True
 
     workflow_id = fields.Many2one(

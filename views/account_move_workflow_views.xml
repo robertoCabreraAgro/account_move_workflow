@@ -36,7 +36,6 @@
                         <page string="Templates">
                             <field name="workflow_template_ids">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
                                     <field name="template_id" options="{'no_create': True}"/>
                                     <field name="condition"/>
                                     <field name="skip_on_error"/>
@@ -100,7 +99,6 @@
                             <field name="template_id" options="{'no_create': True}"/>
                         </group>
                         <group>
-                            <field name="sequence"/>
                             <field name="skip_on_error"/>
                         </group>
                     </group>

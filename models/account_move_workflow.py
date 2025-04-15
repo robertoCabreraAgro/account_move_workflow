@@ -53,14 +53,7 @@ class AccountMoveWorkflow(models.Model):
     def _compute_generated_move_count(self):
         for record in self:
             record.generated_move_count = len(record.generated_move_ids)
-            
-    @api.constrains('workflow_template_ids')
-    def _check_template_sequences(self):
-        for workflow in self:
-            sequences = workflow.workflow_template_ids.mapped('sequence')
-            if len(sequences) != len(set(sequences)):
-                raise ValidationError(_('Template sequences must be unique within the same workflow'))
-    
+
     def action_view_moves(self):
         self.ensure_one()
         action = self.env.ref('account.action_move_journal_line').read()[0]
