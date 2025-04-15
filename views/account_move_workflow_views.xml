@@ -34,7 +34,7 @@
                     </group>
                     <notebook>
                         <page string="Templates">
-                            <field name="template_line_ids">
+                            <field name="workflow_template_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="template_id" options="{'no_create': True}"/>
@@ -89,8 +89,8 @@
 
     <!-- Template Line Form View -->
     <record id="view_account_workflow_template_line_form" model="ir.ui.view">
-        <field name="name">account.move.workflow.template.line.form</field>
-        <field name="model">account.move.workflow.template.line</field>
+        <field name="name">account.move.workflow.template.form</field>
+        <field name="model">account.move.workflow.template</field>
         <field name="arch" type="xml">
             <form string="Workflow Template Line">
                 <sheet>

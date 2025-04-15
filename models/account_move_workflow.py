@@ -31,8 +31,8 @@ class AccountMoveWorkflow(models.Model):
         help='Default currency for this workflow'
     )
     note = fields.Text(string='Description')
-    template_line_ids = fields.One2many(
-        comodel_name='account.move.workflow.template.line',
+    workflow_template_ids = fields.One2many(
+        comodel_name='account.move.workflow.template',
         inverse_name='workflow_id',
         string='Template Lines',
         copy=True
@@ -54,10 +54,10 @@ class AccountMoveWorkflow(models.Model):
         for record in self:
             record.generated_move_count = len(record.generated_move_ids)
             
-    @api.constrains('template_line_ids')
+    @api.constrains('workflow_template_ids')
     def _check_template_sequences(self):
         for workflow in self:
-            sequences = workflow.template_line_ids.mapped('sequence')
+            sequences = workflow.workflow_template_ids.mapped('sequence')
             if len(sequences) != len(set(sequences)):
                 raise ValidationError(_('Template sequences must be unique within the same workflow'))
     

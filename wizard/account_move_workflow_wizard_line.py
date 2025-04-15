@@ -29,8 +29,8 @@ class AccountMoveWorkflowWizardLine(models.TransientModel):
         default='pending',
     )
     error_message = fields.Text()
-    template_line_id = fields.Many2one(
-        comodel_name='account.move.workflow.template.line', 
+    workflow_template_ids = fields.Many2one(
+        comodel_name='account.move.workflow.template', 
         string='Template Line',
     )
     company_id = fields.Many2one(

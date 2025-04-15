@@ -17,6 +17,16 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         required=True,
         domain="[('company_id', '=', company_id), ('active', '=', True)]",
     )
+    line_ids= fields.One2many(
+        comodel_name='account.move.workflow.wizard.line',
+        inverse_name='wizard_id',
+        string='Template'
+    )
+    details_ids = fields.One2many(
+        comodel_name='account.move.workflow.wizard.details',
+        inverse_name='wizard_id',
+        string='Template Details'
+    )
     company_id = fields.Many2one(
         comodel_name='res.company',
         string='Company',
@@ -66,11 +76,6 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         domain="[('company_id', '=', company_id)]",
 
     )
-    template_preview_ids = fields.One2many(
-        comodel_name='account.move.workflow.wizard.line',
-        inverse_name='wizard_id',
-        string='Template Preview'
-    )
 
     reference = fields.Char(string="Reference")
     require_partner = fields.Boolean(compute='_compute_requirements')
@@ -92,11 +97,11 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if self.workflow_id:
             self.currency_id = self.workflow_id.currency_id
             
-            template_lines = self.workflow_id.template_line_ids.sorted(lambda l: l.sequence)
-            preview_vals = []
+            template_lines = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
+            wizard_line_vals = []
             
             for line in template_lines:
-                preview_vals.append({
+                wizard_line_vals.append({
                     'sequence': line.sequence,
                     'template_id': line.template_id.id,
                     'template_line_id': line.id,
@@ -105,9 +110,9 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'state': 'pending'
                 })
             
-            self.template_preview_ids = [(5, 0, 0)]
-            for val in preview_vals:
-                self.template_preview_ids = [(0, 0, val)]
+            self.line_ids = [(5, 0, 0)]
+            for val in wizard_line_vals:
+                self.line_ids = [(0, 0, val)]
                 
             if self.workflow_id.partner_required and not self.partner_id:
                 return {
@@ -131,12 +136,12 @@ class AccountMoveWorkflowWizard(models.TransientModel):
     
     @api.onchange('partner_id', 'amount', 'currency_id', 'date')
     def _onchange_parameters(self):
-        if not self.workflow_id or not self.template_preview_ids:
+        if not self.workflow_id or not self.line_ids:
             return
             
         eval_context = self._get_eval_context()
         
-        for line in self.template_preview_ids:
+        for line in self.line_ids:
             if not line.condition:
                 line.will_execute = True
                 line.state = 'valid'
@@ -169,7 +174,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         
         self._validate_workflow_requirements()
         
-        templates = self.workflow_id.template_line_ids.sorted(lambda l: l.sequence)
+        templates = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
         created_moves = self.env['account.move']
         
         eval_context = self._get_eval_context()
@@ -286,7 +291,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if workflow.partner_required and not self.partner_id:
             errors.append(_("Partner is required for this workflow."))
             
-        if not workflow.template_line_ids:
+        if not workflow.workflow_template_ids :
             errors.append(_("This workflow doesn't have any templates configured."))
         
         if errors:

@@ -34,10 +34,8 @@
 
                     <notebook invisible="workflow_id == False">
                         <page string="Templates to Execute">
-                            <field name="template_preview_ids" widget="one2many">
-                                <list decoration-success="will_execute and state == 'valid'"
-                                      decoration-danger="not will_execute or state == 'error'"
-                                      decoration-muted="state == 'pending'">
+                            <field name="line_ids" widget="one2many">
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="template_id"/>
                                     <field name="condition"/>
@@ -46,16 +44,21 @@
                                            decoration-success="state == 'valid'"
                                            decoration-danger="state == 'error'"
                                            decoration-info="state == 'pending'"/>
-                                    <field name="error_message" invisible="state != 'error'"/>
                                 </list>
                             </field>
-
-                            <div class="alert alert-info" role="status" invisible="state == 'preview'">
-                                <p>Click on 'Preview Execution' to validate workflow parameters and see which templates will be executed.</p>
-                            </div>
-                            <div class="alert alert-success" role="status" invisible="state != 'preview'">
-                                <p>Green rows will be executed. You can now click 'Execute Workflow' to create journal entries.</p>
-                            </div>
+                        </page>
+                        <page string="Templates Details">
+                            <field name="details_ids" widget="one2many">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="account_id"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="quantity"/>
+                                    <field name="amount"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
