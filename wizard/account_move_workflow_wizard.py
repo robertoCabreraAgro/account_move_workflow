@@ -95,21 +95,21 @@ class AccountMoveWorkflowWizard(models.TransientModel):
     @api.onchange('workflow_id')
     def _onchange_workflow(self):
         if self.workflow_id:
-            _logger.info("self.workflow_id %s",self.workflow_id.read())
-
             self.currency_id = self.workflow_id.currency_id
             
-            template_lines = self.workflow_id.workflow_template_ids.sorted(lambda l: l.sequence)
+            template_lines = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
             wizard_line_vals = []
-            _logger.info("template_lines %s",template_lines)
-
+            
             for line in template_lines:
                 wizard_line_vals.append({
+                    'sequence': line.sequence,
                     'template_id': line.template_id.id,
+                    'workflow_template_ids': line.id,
                     'condition': line.condition,
+                    'will_execute': True,
                     'state': 'pending'
                 })
-            _logger.info("wizard_line_vals %s",wizard_line_vals)
+            
             self.line_ids = [(5, 0, 0)]
             for val in wizard_line_vals:
                 self.line_ids = [(0, 0, val)]
@@ -174,7 +174,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         
         self._validate_workflow_requirements()
         
-        templates = self.workflow_id.workflow_template_ids.sorted(lambda l: l.sequence)
+        templates = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
         created_moves = self.env['account.move']
         
         eval_context = self._get_eval_context()
@@ -291,7 +291,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if workflow.partner_required and not self.partner_id:
             errors.append(_("Partner is required for this workflow."))
             
-        if not workflow.workflow_template_ids:
+        if not workflow.workflow_template_ids :
             errors.append(_("This workflow doesn't have any templates configured."))
         
         if errors:

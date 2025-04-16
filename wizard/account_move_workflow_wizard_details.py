@@ -64,6 +64,8 @@ class AccountMoveWorkflowWizardDetails(models.TransientModel):
         string="Direction",
         required=True,
     )
+    sequence = fields.Integer(string="Orden", default=10)
+
     
     @api.onchange('template_id')
     def _onchange_template_id(self):

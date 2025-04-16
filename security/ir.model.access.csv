@@ -1,7 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_account_move_workflow_user,account.move.workflow user,model_account_move_workflow,account.group_account_user,1,1,1,0
-access_account_move_workflow_manager,account.move.workflow manager,model_account_move_workflow,account.group_account_manager,1,1,1,1
+access_account_move_workflow_manager,account.move.workflow manager,model_account_move_workflow,account.group_account_user,1,1,1,1
 access_account_move_workflow_wizard_user,account.move.workflow.wizard user,model_account_move_workflow_wizard,account.group_account_user,1,1,1,1
 access_account_move_workflow_template,access.account.move.workflow.template,model_account_move_workflow_template,account.group_account_user,1,1,1,1
-access_account_move_workflow_wizard_line,access.account.move.workflow.wizard.line,model_account_move_workflow_wizard_line,account.group_account_user,1,1,1,0
-access_account_move_workflow_wizard_details,access.account.move.workflow.wizard.details,model_account_move_workflow_wizard_details,account.group_account_user,1,1,1,0
+access_account_move_workflow_wizard_line,account.move.workflow.wizard.line,model_account_move_workflow_wizard_line,account.group_account_user,1,1,1,1
+access_account_move_workflow_wizard_details,account.move.workflow.wizard.details,model_account_move_workflow_wizard_details,account.group_account_user,1,1,1,1
+access_account_move_workflow_wizard_line,account.move.workflow.wizard.line,model_account_move_workflow_wizard_line,account.group_account_user,1,1,1,1
