@@ -3,7 +3,7 @@ from odoo import api, fields, models, _
 class AccountMoveWorkflowWizardDetails(models.TransientModel):
     _name = 'account.move.workflow.wizard.details'
     _description = 'Workflow Wizard Details Preview'
-    _order = 'id'
+    _order = 'wizard_line_id, sequence, id'
 
     wizard_id = fields.Many2one(
         comodel_name='account.move.workflow.wizard', 
@@ -18,12 +18,14 @@ class AccountMoveWorkflowWizardDetails(models.TransientModel):
         comodel_name='account.move.template', 
         related="wizard_line_id.template_id",
         string='Template',
+        store=True,
     )
     company_id = fields.Many2one(
         comodel_name='res.company',
         related='wizard_id.company_id',
         store=True,
     )
+    sequence = fields.Integer(string="Sequence", default=10)
     name = fields.Char(string="Label")
     partner_id = fields.Many2one(
         comodel_name="res.partner",
@@ -64,15 +66,36 @@ class AccountMoveWorkflowWizardDetails(models.TransientModel):
         string="Direction",
         required=True,
     )
-    sequence = fields.Integer(string="Orden", default=10)
-
+    template_line_type = fields.Selection(
+        selection=[
+            ("input", "User input"),
+            ("computed", "Computed"),
+        ],
+        string="Line Type",
+        readonly=True,
+    )
+    template_line_id = fields.Many2one(
+        comodel_name="account.move.template.line",
+        string="Template Line",
+        readonly=True,
+    )
+    template_python_code = fields.Text(
+        string="Formula",
+        readonly=True,
+    )
     
-    @api.onchange('template_id')
-    def _onchange_template_id(self):
+    @api.depends('product_id')
+    def _compute_product_uom_id(self):
         for line in self:
-            if not line.template_id:
-                line.state = 'error'
-                line.error_message = _('No template selected')
+            if line.product_id:
+                line.product_uom_id = line.product_id.uom_id
             else:
-                line.state = 'pending'
-                line.error_message = False
+                line.product_uom_id = False
+    
+    @api.onchange('wizard_line_id')
+    def _onchange_wizard_line_id(self):
+        for line in self:
+            if not line.wizard_line_id or not line.wizard_line_id.template_id:
+                continue
+                
+            line.template_id = line.wizard_line_id.template_id.id

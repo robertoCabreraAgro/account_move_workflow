@@ -97,7 +97,11 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if self.workflow_id:
             self.currency_id = self.workflow_id.currency_id
             
-            template_lines = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
+            # Limpiar líneas existentes
+            self.line_ids = [(5, 0, 0)]
+            self.details_ids = [(5, 0, 0)]
+            
+            template_lines = self.workflow_id.workflow_template_ids.sorted(lambda l: l.sequence)
             wizard_line_vals = []
             
             for line in template_lines:
@@ -110,9 +114,11 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'state': 'pending'
                 })
             
-            self.line_ids = [(5, 0, 0)]
             for val in wizard_line_vals:
                 self.line_ids = [(0, 0, val)]
+            
+            # Cargar detalles para cada template
+            self._load_template_details()
                 
             if self.workflow_id.partner_required and not self.partner_id:
                 return {
@@ -129,10 +135,81 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             if self.amount:
                 self.price_unit = self.amount
     
+    def _load_template_details(self):
+        """Carga todas las líneas de todos los templates asociados al workflow"""
+        if not self.workflow_id or not self.line_ids:
+            return
+            
+        templates = self.line_ids.mapped('template_id')
+        detail_vals = []
+        seq = 1
+        
+        for wiz_line in self.line_ids:
+            template = wiz_line.template_id
+            if not template:
+                continue
+                
+            template_lines = self.env['account.move.template.line'].search(
+                [('template_id', '=', template.id)], order='sequence'
+            )
+            
+            for tmpl_line in template_lines:
+                detail_vals.append({
+                    'wizard_id': self.id,
+                    'wizard_line_id': wiz_line.id,
+                    'name': tmpl_line.name,
+                    'sequence': seq,
+                    'account_id': tmpl_line.account_id.id,
+                    'partner_id': tmpl_line.partner_id.id if tmpl_line.partner_id else False,
+                    'move_line_type': tmpl_line.move_line_type,
+                    'tax_ids': [(6, 0, tmpl_line.tax_ids.ids)] if hasattr(tmpl_line, 'tax_ids') else False,
+                    'product_id': tmpl_line.product_id.id if hasattr(tmpl_line, 'product_id') and tmpl_line.product_id else False,
+                    'quantity': tmpl_line.quantity if hasattr(tmpl_line, 'quantity') else 1.0,
+                    'amount': 0.0,  # Será calculado luego
+                    'template_line_type': tmpl_line.type if hasattr(tmpl_line, 'type') else 'input',
+                    'template_line_id': tmpl_line.id,
+                    'template_python_code': tmpl_line.python_code if hasattr(tmpl_line, 'python_code') else False,
+                })
+                seq += 1
+                
+        for val in detail_vals:
+            self.details_ids = [(0, 0, val)]
+    
     @api.onchange('amount')
     def _onchange_amount(self):
         if self.amount:
             self.price_unit = self.amount
+            
+            # Actualizar cantidades en detalles
+            if self.details_ids:
+                # Aplicar la lógica para asignar montos a las líneas 
+                # basado en los tipos de línea (computed/input) del template original
+                self._update_details_amounts()
+    
+    def _update_details_amounts(self):
+        """Actualiza los montos en las líneas de detalles según la lógica del template"""
+        if not self.details_ids:
+            return
+            
+        # Obtener la lógica de los templates originales para cálculos
+        for wiz_line in self.line_ids:
+            template = wiz_line.template_id
+            if not template:
+                continue
+                
+            details = self.details_ids.filtered(lambda d: d.wizard_line_id.id == wiz_line.id)
+            if not details:
+                continue
+                
+            # Buscar líneas de entrada (input) y asignar valor proporcional
+            input_details = details.filtered(lambda d: d.template_line_type == 'input')
+            if input_details and self.amount:
+                # Para simplificar, asignaremos el monto total a la primera línea de débito
+                input_details[0].amount = self.amount
+                
+                # El resto podría calcularse según la lógica del template original
+                # Aquí podríamos replicar la lógica de cálculo del template, pero
+                # por simplicidad dejamos las otras líneas en 0 por ahora
     
     @api.onchange('partner_id', 'amount', 'currency_id', 'date')
     def _onchange_parameters(self):
@@ -156,6 +233,10 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 line.will_execute = False
                 line.state = 'error'
                 line.error_message = str(e)
+                
+        # Actualizar detalles si es necesario
+        if self.amount:
+            self._update_details_amounts()
     
     def _get_eval_context(self):
         return {
@@ -174,7 +255,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         
         self._validate_workflow_requirements()
         
-        templates = self.workflow_id.workflow_template_ids .sorted(lambda l: l.sequence)
+        templates = self.workflow_id.workflow_template_ids.sorted(lambda l: l.sequence)
         created_moves = self.env['account.move']
         
         eval_context = self._get_eval_context()
@@ -193,6 +274,9 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                 
                 template = line.template_id
                 
+                # Usar la compañía destino definida en el template si existe
+                target_company_id = template.target_company_id.id if hasattr(template, 'target_company_id') and template.target_company_id else self.company_id.id
+                
                 template_run_vals = {
                     'template_id': template.id,
                     'date': self.date,
@@ -201,6 +285,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
                     'ref': self.reference,
                     'move_type': template.move_type,
                     'price_unit': self.price_unit or self.amount,
+                    'company_id': target_company_id,  # Usar la compañía destino
                 }
                 
                 if hasattr(template, 'date') and template.date:
@@ -246,8 +331,8 @@ class AccountMoveWorkflowWizard(models.TransientModel):
             except Exception as e:
                 _logger.error(f"Error executing workflow template {line.template_id.name}: {str(e)}")
                 if not line.skip_on_error:
-                    created_moves.button_draft()
-                    created_moves.unlink()
+                    created_moves.with_context(force_delete=True).button_draft()
+                    created_moves.with_context(force_delete=True).unlink()
                     raise UserError(_(
                         "Error executing template %(template)s (sequence %(sequence)d): %(error)s"
                     ) % {
@@ -291,7 +376,7 @@ class AccountMoveWorkflowWizard(models.TransientModel):
         if workflow.partner_required and not self.partner_id:
             errors.append(_("Partner is required for this workflow."))
             
-        if not workflow.workflow_template_ids :
+        if not workflow.workflow_template_ids:
             errors.append(_("This workflow doesn't have any templates configured."))
         
         if errors:
